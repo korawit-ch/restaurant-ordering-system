@@ -16,7 +16,8 @@ export function Action({
 }) {
   return (
     <Button
-      className={`action ${secondary ? 'secondary' : 'primary'}`}
+      variant={secondary ? 'secondary' : 'primary'}
+      className={`flex min-h-[50px] items-center justify-center gap-[15px] rounded-[11px] border px-5 py-3 text-[15px] font-semibold ${secondary ? 'bg-orderly-surface text-orderly-green hover:bg-orderly-bg border-[#bdcbbb]' : 'border-orderly-green bg-orderly-green text-white hover:bg-[#163e2e]'}`}
       type={type}
       disabled={disabled}
       onClick={onClick}
@@ -35,7 +36,10 @@ export function money(value: string | number) {
 }
 export function ErrorNotice({ error }: { error: unknown }) {
   return error ? (
-    <div role="alert" className="error">
+    <div
+      role="alert"
+      className="my-[15px] rounded-xl border border-[#edb5a3] bg-[#ffe7df] p-[14px] text-[#882e1b]"
+    >
       {error instanceof Error
         ? error.message
         : typeof error === 'string'
@@ -45,8 +49,24 @@ export function ErrorNotice({ error }: { error: unknown }) {
   ) : null;
 }
 export function Status({ value }: { value: string }) {
+  const colors: Record<string, string> = {
+    NEW: 'bg-[#e7efa9] text-[#455419]',
+    PAID: 'bg-[#deeee3] text-[#24543a]',
+    SERVED: 'bg-[#deeee3] text-[#24543a]',
+    ACTIVE: 'bg-[#deeee3] text-[#24543a]',
+    COMPLETED: 'bg-[#deeee3] text-[#24543a]',
+    READY: 'bg-[#deeee3] text-[#24543a]',
+    PENDING: 'bg-[#fae4bc] text-[#80571c]',
+    PREPARING: 'bg-[#fae4bc] text-[#80571c]',
+    CANCELLED: 'bg-[#f6ded9] text-[#9b3f2e]',
+    FAILED: 'bg-[#f6ded9] text-[#9b3f2e]',
+    INACTIVE: 'bg-[#f6ded9] text-[#9b3f2e]',
+    ACCEPTED: 'bg-[#dfe9f5] text-[#3e587a]',
+  };
   return (
-    <span className={`badge ${value.toLowerCase()}`}>
+    <span
+      className={`rounded-md px-[9px] py-[6px] text-[10px] font-bold tracking-[0.6px] whitespace-nowrap ${colors[value] || 'bg-[#e9ece5] text-[#596750]'}`}
+    >
       {value.replaceAll('_', ' ')}
     </span>
   );

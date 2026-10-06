@@ -10,15 +10,20 @@ export default function Login() {
     [error, setError] = useState<unknown>(null),
     [busy, setBusy] = useState(false);
   return (
-    <main className="login">
-      <Link href="/" className="wordmark">
+    <main className="mx-auto max-w-[600px] px-[25px] py-[60px]">
+      <Link
+        href="/"
+        className="flex items-center gap-2.5 text-xs font-extrabold tracking-[1.3px]"
+      >
         ORDERLY
       </Link>
-      <div className="eyebrow">STAFF ACCESS</div>
+      <div className="mt-[26px] text-[10px] font-bold tracking-[2px]">
+        STAFF ACCESS
+      </div>
       <h1>Ready for service.</h1>
       <p>Sign in to manage orders, sessions, and payments.</p>
       <form
-        className="panel"
+        className="border-orderly-line bg-orderly-surface mt-[30px] mb-5 rounded-[18px] border p-6 [&_button[type=submit]]:w-full"
         onSubmit={(e) => {
           e.preventDefault();
           setBusy(true);

@@ -12,8 +12,11 @@ export function ForgotPassword() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<unknown>(null);
   return (
-    <main className="login">
-      <Link href="/" className="wordmark">
+    <main className="mx-auto max-w-[600px] px-[25px] py-[60px]">
+      <Link
+        href="/"
+        className="flex items-center gap-2.5 text-xs font-extrabold tracking-[1.3px]"
+      >
         ORDERLY
       </Link>
       <h1>Reset your password</h1>
@@ -22,7 +25,7 @@ export function ForgotPassword() {
         account.
       </p>
       <form
-        className="panel"
+        className="border-orderly-line bg-orderly-surface mt-[30px] mb-5 rounded-[18px] border p-6 [&_button[type=submit]]:w-full"
         onSubmit={(event) => {
           event.preventDefault();
           setBusy(true);
@@ -66,8 +69,11 @@ export function ResetPassword({ token }: { token: string }) {
   const [done, setDone] = useState(false);
   const [error, setError] = useState<unknown>(null);
   return (
-    <main className="login">
-      <Link href="/" className="wordmark">
+    <main className="mx-auto max-w-[600px] px-[25px] py-[60px]">
+      <Link
+        href="/"
+        className="flex items-center gap-2.5 text-xs font-extrabold tracking-[1.3px]"
+      >
         ORDERLY
       </Link>
       <h1>Choose a new password</h1>
@@ -80,7 +86,7 @@ export function ResetPassword({ token }: { token: string }) {
       )}
       {token && !done && (
         <form
-          className="panel"
+          className="border-orderly-line bg-orderly-surface mt-[30px] mb-5 rounded-[18px] border p-6 [&_button[type=submit]]:w-full"
           onSubmit={(event) => {
             event.preventDefault();
             if (password !== confirmation) {
@@ -143,8 +149,11 @@ export function AcceptInvitation({ token }: { token: string }) {
   const [done, setDone] = useState(false);
   const [error, setError] = useState<unknown>(null);
   return (
-    <main className="login">
-      <Link href="/" className="wordmark">
+    <main className="mx-auto max-w-[600px] px-[25px] py-[60px]">
+      <Link
+        href="/"
+        className="flex items-center gap-2.5 text-xs font-extrabold tracking-[1.3px]"
+      >
         ORDERLY
       </Link>
       <h1>Join the team</h1>
@@ -159,7 +168,7 @@ export function AcceptInvitation({ token }: { token: string }) {
       )}
       {invite.data && !done && (
         <form
-          className="panel"
+          className="border-orderly-line bg-orderly-surface mt-[30px] mb-5 rounded-[18px] border p-6 [&_button[type=submit]]:w-full"
           onSubmit={(event) => {
             event.preventDefault();
             if (invite.data.needsPassword && password !== confirmation) {

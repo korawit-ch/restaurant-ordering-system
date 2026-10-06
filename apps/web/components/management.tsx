@@ -44,7 +44,7 @@ function CategoryBody() {
       <p>Set the order customers browse your menu.</p>
       <ErrorNotice error={error} />
       <form
-        className="panel row"
+        className="border-orderly-line bg-orderly-surface my-5 flex items-center justify-between gap-3 rounded-[18px] border p-6"
         onSubmit={(e) => {
           e.preventDefault();
           void save({
@@ -62,12 +62,17 @@ function CategoryBody() {
         />
         <Action type="submit">Add</Action>
       </form>
-      <div className="panel management-list">
+      <div className="border-orderly-line bg-orderly-surface my-5 rounded-[18px] border p-6 px-[22px]">
         {q.data?.map((c) => (
-          <div className="management-row" key={c.id}>
-            <strong className="management-name">{c.name}</strong>
+          <div
+            className="border-orderly-line flex items-center gap-5 border-b py-5 last:border-0 max-[760px]:flex-wrap max-[760px]:gap-2.5"
+            key={c.id}
+          >
+            <strong className="flex flex-1 flex-col gap-[6px] max-[760px]:min-w-[130px]">
+              {c.name}
+            </strong>
             <span>#{c.sortOrder}</span>
-            <label className="toggle">
+            <label className="flex min-w-[115px] flex-row items-center text-xs">
               <input
                 type="checkbox"
                 checked={c.active}
@@ -140,7 +145,7 @@ function ProductBody() {
       </p>
       <ErrorNotice error={error} />
       <form
-        className="panel setup-form"
+        className="border-orderly-line bg-orderly-surface my-5 grid gap-3 rounded-[18px] border p-6"
         onSubmit={(e) => {
           e.preventDefault();
           void save({
@@ -191,17 +196,20 @@ function ProductBody() {
         </label>
         <Action type="submit">Add product</Action>
       </form>
-      <div className="panel management-list">
+      <div className="border-orderly-line bg-orderly-surface my-5 rounded-[18px] border p-6 px-[22px]">
         {q.data?.map((p) => (
-          <div className="management-row" key={p.id}>
-            <div className="management-name">
+          <div
+            className="border-orderly-line flex items-center gap-5 border-b py-5 last:border-0 max-[760px]:flex-wrap max-[760px]:gap-2.5"
+            key={p.id}
+          >
+            <div className="flex flex-1 flex-col gap-[6px] max-[760px]:min-w-[130px]">
               <strong>{p.name}</strong>
               <small>
                 {categories.data?.find((c) => c.id === p.categoryId)?.name} ·{' '}
                 {money(p.price)}
               </small>
             </div>
-            <label className="toggle">
+            <label className="flex min-w-[115px] flex-row items-center text-xs">
               <input
                 type="checkbox"
                 checked={p.available}
@@ -237,9 +245,12 @@ function ProductBody() {
         ))}
       </div>
       {editing && (
-        <div className="modal-backdrop" onClick={() => setEditing(null)}>
+        <div
+          className="fixed inset-0 z-30 flex items-center justify-center bg-[#0b221c99] p-5 backdrop-blur-[4px]"
+          onClick={() => setEditing(null)}
+        >
           <form
-            className="modal setup-form"
+            className="bg-orderly-surface grid max-h-[90vh] w-full max-w-[540px] gap-3 overflow-auto rounded-[20px] p-7"
             onClick={(e) => e.stopPropagation()}
             onSubmit={(e) => {
               e.preventDefault();
@@ -336,20 +347,25 @@ export function QrPrint({
     void QRCode.toDataURL(url, { width: 640, margin: 2 }).then(setData);
   }, [url]);
   return (
-    <div className="modal-backdrop qr-modal" onClick={onClose}>
+    <div
+      className="qr-modal fixed inset-0 z-30 flex items-center justify-center bg-[#0b221c99] p-5 backdrop-blur-[4px]"
+      onClick={onClose}
+    >
       <div
-        className={`modal print-card ${format}`}
+        className={`print-card bg-orderly-surface max-h-[90vh] w-full max-w-[540px] overflow-auto rounded-[20px] p-7 text-center [&>img]:mx-auto [&>img]:my-2.5 [&>img]:block [&>img]:w-[320px] [&>img]:max-w-full ${format === 'thermal' ? 'thermal max-w-[80mm]' : ''}`}
         onClick={(e) => e.stopPropagation()}
       >
         {format === 'thermal' && (
           <style>{'@page { size: 80mm 200mm; margin: 4mm; }'}</style>
         )}
-        <div className="eyebrow">SCAN TO ORDER</div>
+        <div className="mt-[26px] text-[10px] font-bold tracking-[2px]">
+          SCAN TO ORDER
+        </div>
         <h1>{title}</h1>
         {description && <p>{description}</p>}
         {data && <img src={data} alt={`QR for ${title}`} />}
         <p>{url}</p>
-        <div className="row no-print">
+        <div className="no-print flex flex-wrap items-center justify-between gap-3">
           <select
             aria-label="Print format"
             value={format}
@@ -360,7 +376,7 @@ export function QrPrint({
           </select>
           <button onClick={() => window.print()}>Print</button>
           <a
-            className="button secondary"
+            className="bg-orderly-surface text-orderly-green flex min-h-[50px] items-center justify-center gap-[15px] rounded-[11px] border border-[#bdcbbb] px-5 py-3 text-[15px] font-semibold no-underline"
             href={data}
             download={`${title.replace(/[^a-z0-9]/gi, '-')}-qr.png`}
           >
@@ -411,7 +427,7 @@ function PointBody() {
       </p>
       <ErrorNotice error={error} />
       <form
-        className="panel setup-form"
+        className="border-orderly-line bg-orderly-surface my-5 grid gap-3 rounded-[18px] border p-6"
         onSubmit={(e) => {
           e.preventDefault();
           void save({ name, type });
@@ -438,10 +454,13 @@ function PointBody() {
         </label>
         <Action type="submit">Add location</Action>
       </form>
-      <div className="tables-grid">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-5">
         {q.data?.map((p) => (
-          <article className="panel table-card" key={p.id}>
-            <h2>{p.name}</h2>
+          <article
+            className="border-orderly-line bg-orderly-surface m-0 flex flex-col gap-[15px] rounded-[18px] border p-6"
+            key={p.id}
+          >
+            <h2 className="text-4xl">{p.name}</h2>
             <Status value={p.active ? 'ACTIVE' : 'INACTIVE'} />
             <p>{p.description || p.type}</p>
             {branch.data?.settings.qrMode === 'PERMANENT' && (
@@ -528,7 +547,7 @@ function SessionBody() {
       <ErrorNotice error={error} />
       {branch.data?.settings.qrMode === 'SESSION' && (
         <form
-          className="panel setup-form"
+          className="border-orderly-line bg-orderly-surface my-5 grid gap-3 rounded-[18px] border p-6"
           onSubmit={(e) => {
             e.preventDefault();
             void action(async () => {
@@ -577,10 +596,15 @@ function SessionBody() {
           <Action type="submit">Create session QR</Action>
         </form>
       )}
-      <div className="tables-grid">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-5">
         {q.data?.map((s) => (
-          <article className="panel table-card" key={s.id}>
-            <h2>{s.label || s.servicePoint?.name || 'Flexible'}</h2>
+          <article
+            className="border-orderly-line bg-orderly-surface m-0 flex flex-col gap-[15px] rounded-[18px] border p-6"
+            key={s.id}
+          >
+            <h2 className="text-4xl">
+              {s.label || s.servicePoint?.name || 'Flexible'}
+            </h2>
             <p>{s.description}</p>
             <p>
               Opened {new Date(s.openedAt).toLocaleTimeString()} ·{' '}
@@ -773,10 +797,10 @@ function SettingsBody() {
         Start from a preset and keep ordering simple for your service style.
       </p>
       <ErrorNotice error={error} />
-      <section className="panel">
+      <section className="border-orderly-line bg-orderly-surface my-5 rounded-[18px] border p-6">
         <h2>Workflow preset</h2>
         <p>Current: {q.data?.settings.preset}</p>
-        <div className="preset-grid">
+        <div className="my-5 grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-2.5">
           {(
             [
               'TABLE_SERVICE',
@@ -798,7 +822,7 @@ function SettingsBody() {
         </p>
       </section>
       <form
-        className="panel"
+        className="border-orderly-line bg-orderly-surface my-5 rounded-[18px] border p-6"
         onSubmit={(e) => {
           e.preventDefault();
           if (!q.data) return;
@@ -855,12 +879,12 @@ function OnboardingBody() {
     <>
       <h1>Get ready to receive orders</h1>
       <p>Set up your restaurant without special hardware.</p>
-      <div className="panel">
+      <div className="border-orderly-line bg-orderly-surface my-5 rounded-[18px] border p-6">
         {q.data?.steps.map((s) => (
           <Link
             key={s.key}
             href={links[s.key] || '#'}
-            className="management-row"
+            className="border-orderly-line flex items-center gap-5 border-b py-5 last:border-0 max-[760px]:flex-wrap max-[760px]:gap-2.5"
           >
             <strong>
               {s.done ? '✓' : '○'}{' '}
@@ -878,7 +902,10 @@ function OnboardingBody() {
           </Link>
         ))}
       </div>
-      <Link className="button primary" href="/staff/orders">
+      <Link
+        className="border-orderly-green bg-orderly-green flex min-h-[50px] items-center justify-center gap-[15px] rounded-[11px] border px-5 py-3 text-[15px] font-semibold text-white no-underline hover:bg-[#163e2e]"
+        href="/staff/orders"
+      >
         Open staff dashboard
       </Link>
     </>
@@ -908,7 +935,7 @@ function ReportsBody() {
       <p>Simple branch sales summary based on confirmed payments.</p>
       {q.data && (
         <>
-          <div className="summary-strip">
+          <div className="border-orderly-line bg-orderly-surface mb-[30px] grid grid-cols-[1.5fr_1fr_1fr_1fr] rounded-[15px] border p-[22px] max-[1100px]:p-[18px] max-[760px]:grid-cols-2 max-[760px]:gap-[18px]">
             <div>
               <small>Orders</small>
               <strong>{q.data.orderCount}</strong>
@@ -926,20 +953,28 @@ function ReportsBody() {
               <strong>{money(q.data.promptpay)}</strong>
             </div>
           </div>
-          <section className="panel">
+          <section className="border-orderly-line bg-orderly-surface my-5 rounded-[18px] border p-6">
             <h2>Top products</h2>
             {q.data.topProducts.map((p, i) => (
-              <div className="management-row" key={i}>
+              <div
+                className="border-orderly-line flex items-center gap-5 border-b py-5 last:border-0 max-[760px]:flex-wrap max-[760px]:gap-2.5"
+                key={i}
+              >
                 <strong>{p.productNameSnapshot}</strong>
                 <span>{p._sum.quantity || 0} sold</span>
               </div>
             ))}
           </section>
-          <section className="panel">
+          <section className="border-orderly-line bg-orderly-surface my-5 rounded-[18px] border p-6">
             <h2>Sales by day</h2>
             {daily.data?.map((day) => (
-              <div className="management-row" key={day.date}>
-                <strong className="management-name">{day.date}</strong>
+              <div
+                className="border-orderly-line flex items-center gap-5 border-b py-5 last:border-0 max-[760px]:flex-wrap max-[760px]:gap-2.5"
+                key={day.date}
+              >
+                <strong className="flex flex-1 flex-col gap-[6px] max-[760px]:min-w-[130px]">
+                  {day.date}
+                </strong>
                 <span>Cash {money(day.cash)}</span>
                 <span>PromptPay {money(day.promptpay)}</span>
                 <strong>{money(day.total)}</strong>
@@ -971,7 +1006,7 @@ function BranchBody() {
       <p>Your subscription controls how many active branches you can run.</p>
       <ErrorNotice error={error} />
       <form
-        className="panel setup-form"
+        className="border-orderly-line bg-orderly-surface my-5 grid gap-3 rounded-[18px] border p-6"
         onSubmit={(e) => {
           e.preventDefault();
           const f = new FormData(e.currentTarget);
@@ -1015,10 +1050,13 @@ function BranchBody() {
         </label>
         <Action type="submit">Create branch</Action>
       </form>
-      <div className="panel management-list">
+      <div className="border-orderly-line bg-orderly-surface my-5 rounded-[18px] border p-6 px-[22px]">
         {q.data?.map((b) => (
-          <div className="management-row" key={b.id}>
-            <strong className="management-name">
+          <div
+            className="border-orderly-line flex items-center gap-5 border-b py-5 last:border-0 max-[760px]:flex-wrap max-[760px]:gap-2.5"
+            key={b.id}
+          >
+            <strong className="flex flex-1 flex-col gap-[6px] max-[760px]:min-w-[130px]">
               {b.name}
               <small>
                 {b.slug} · {b.timezone}
@@ -1065,7 +1103,7 @@ function StaffBody() {
       {sent && <p>Invitation sent. Ask the recipient to check their email.</p>}
       {me.data?.role === 'OWNER' && (
         <form
-          className="panel setup-form"
+          className="border-orderly-line bg-orderly-surface my-5 grid gap-3 rounded-[18px] border p-6"
           onSubmit={(e) => {
             e.preventDefault();
             setSent(false);
@@ -1100,11 +1138,14 @@ function StaffBody() {
         </form>
       )}
       {!!invitations.data?.length && (
-        <div className="panel management-list">
+        <div className="border-orderly-line bg-orderly-surface my-5 rounded-[18px] border p-6 px-[22px]">
           <h2>Pending invitations</h2>
           {invitations.data.map((invite) => (
-            <div className="management-row" key={invite.id}>
-              <strong className="management-name">
+            <div
+              className="border-orderly-line flex items-center gap-5 border-b py-5 last:border-0 max-[760px]:flex-wrap max-[760px]:gap-2.5"
+              key={invite.id}
+            >
+              <strong className="flex flex-1 flex-col gap-[6px] max-[760px]:min-w-[130px]">
                 {invite.email}
                 <small>{invite.role}</small>
               </strong>
@@ -1132,10 +1173,13 @@ function StaffBody() {
           ))}
         </div>
       )}
-      <div className="panel management-list">
+      <div className="border-orderly-line bg-orderly-surface my-5 rounded-[18px] border p-6 px-[22px]">
         {q.data?.map((u) => (
-          <div className="management-row" key={u.id}>
-            <strong className="management-name">
+          <div
+            className="border-orderly-line flex items-center gap-5 border-b py-5 last:border-0 max-[760px]:flex-wrap max-[760px]:gap-2.5"
+            key={u.id}
+          >
+            <strong className="flex flex-1 flex-col gap-[6px] max-[760px]:min-w-[130px]">
               {u.email}
               <small>{u.role}</small>
             </strong>
@@ -1176,7 +1220,7 @@ export function AdvancedWorkflow() {
   if (!q.data) return null;
   const settings = q.data.settings;
   return (
-    <section className="panel">
+    <section className="border-orderly-line bg-orderly-surface my-5 rounded-[18px] border p-6">
       <h2>Advanced workflow</h2>
       <p>
         Change these only when your service flow needs a different combination.
@@ -1185,7 +1229,7 @@ export function AdvancedWorkflow() {
       <ErrorNotice error={error} />
       <form
         key={settings.preset + settings.qrMode + settings.paymentMode}
-        className="setup-form"
+        className="grid gap-3"
         onSubmit={(e) => {
           e.preventDefault();
           const f = new FormData(e.currentTarget);
