@@ -104,6 +104,8 @@ Payment and fulfillment state machines are separate. For per-order payment, CASH
 
 SSE announces new/changed orders to a branch-scoped staff stream. The board always reloads database state and polls every 15 seconds, so refresh and reconnection recover correctly. Browser sound requires an explicit staff interaction and only plays for genuinely new orders after the initial load. The supplied deployment runs one NestJS API replica; an event broker would be needed before scaling SSE across replicas.
 
+On a bar tablet, open `/staff/orders` and tap **Keep screen awake**. The browser remembers this device's preference and requests a screen wake lock while the live board is visible; it requests the lock again when the tab becomes visible. The page shows if the device denies the lock and offers Retry. This requires browser support and HTTPS in production, and it does not keep the device awake after the tab is hidden or closed. Use the tablet's display settings as a fallback.
+
 Authenticated sessions use random HttpOnly, SameSite=Strict cookies with 12-hour expiry and Secure in production. Write requests require the configured origin and JSON content type. QR tokens grant public ordering only, not staff access.
 
 ## Structure
