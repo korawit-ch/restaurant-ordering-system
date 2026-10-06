@@ -28,6 +28,7 @@ flowchart LR
 
   subgraph external[External services]
     resend[Resend email API]
+    s3[Private AWS S3 bucket\noptional payment slips]
     bank[Merchant bank API\nplanned]
   end
 
@@ -41,6 +42,7 @@ flowchart LR
   api --> events
   events -->|/api/staff/events| staff
   api -->|password reset and invitations| resend
+  api -->|optional slip upload and signed view| s3
   api -.->|dynamic QR, callback, inquiry| bank
 ```
 
@@ -368,6 +370,16 @@ erDiagram
     datetime submittedAt
     datetime reviewedAt
   }
+  PAYMENT_SLIP {
+    uuid id PK
+    uuid tenantId FK
+    uuid branchId FK
+    uuid orderId FK
+    string objectKey
+    string sha256
+    string qrPayloadHash
+    boolean duplicateWarning
+  }
   MANUAL_REFUND {
     uuid id PK
     uuid tenantId FK
@@ -404,6 +416,8 @@ erDiagram
   PRODUCT o|--o{ ORDER_ITEM : references
   BRANCH ||--o{ PAYMENT_CLAIM : reviews
   ORDER ||--o| PAYMENT_CLAIM : receives
+  BRANCH ||--o{ PAYMENT_SLIP : stores
+  ORDER ||--o| PAYMENT_SLIP : attaches
   BRANCH ||--o{ MANUAL_REFUND : manages
   ORDER ||--o{ MANUAL_REFUND : refunds
 ```
@@ -416,6 +430,7 @@ Important modeling details:
 - `OrderItem` stores product-name and unit-price snapshots. Historical orders therefore do not change when products are renamed or repriced. `productId` is nullable so the snapshot can survive product retirement.
 - Payment state and order fulfillment state are separate. A `PREPARING` order can have a `PAID` or `PENDING` payment.
 - `PaymentClaim` is a customer statement that payment was sent. It is never proof of settlement.
+- `PaymentSlip` stores private S3 object metadata and local image/QR check results. It never proves that a bank transfer settled.
 - `ManualRefund` records money returned outside the application. It does not rewrite the original paid order or total.
 - Reviewer and actor fields such as `confirmedBy`, `reviewedBy`, and `completedBy` currently store user IDs as audit values but are not foreign-key relations. This preserves the record if a user is later deactivated.
 
@@ -476,7 +491,7 @@ flowchart TD
   paid -->|Optional refund| refundRequest --> reserve --> transfer --> complete --> refunded
 ```
 
-The current application does not contact PromptPay or a bank. QR generation uses the configured recipient ID and server-calculated amount. Uploaded or customer-entered evidence would remain unverified until staff checks the receiving account. The [payment architecture guide](PAYMENTS.md) describes the exact current implementation, manual reconciliation improvements, slip-assisted review limits, and provider-ready design.
+The application does not contact PromptPay or a bank. QR generation uses the configured recipient ID and server-calculated amount. Optional customer slips are re-encoded and stored in private S3; image and QR hashes support initial duplicate warnings. The evidence remains unverified until staff checks the receiving account. The [payment architecture guide](PAYMENTS.md) describes the exact current implementation, review limits, and provider-ready design.
 
 ## External and internal service structure
 
@@ -500,6 +515,7 @@ flowchart TB
 
   subgraph providers[External provider services]
     resend[Resend\ntransactional email]
+    s3[Private S3\noptional slip images]
     bankAPI[Bank merchant QR API\nplanned]
   end
 
@@ -514,6 +530,7 @@ flowchart TB
   nest --> sse
   sse --> tablet
   nest --> resend
+  nest --> s3
   phone --> banking
   banking -. payment network .-> bankAPI
   nest -. dynamic QR request .-> bankAPI
@@ -524,8 +541,9 @@ Current external dependencies:
 
 - PostgreSQL is operational infrastructure and contains all critical state.
 - Resend sends password-reset and staff-invitation email when `RESEND_API_KEY` and `EMAIL_FROM` are configured. Email delivery is not used for order correctness.
+- Private S3 stores optional customer PromptPay slips when `PAYMENT_SLIP_S3_BUCKET` is configured. PostgreSQL stores metadata and review state; S3 stores the re-encoded image.
 - Customer and restaurant banking apps perform PromptPay transfers outside Orderly.
-- No object storage, Redis, message broker, payment gateway, bank API, or printer agent is currently required.
+- No object storage, Redis, message broker, payment gateway, bank API, or printer agent is required for the base ordering flow.
 
 Planned direct-bank extension:
 

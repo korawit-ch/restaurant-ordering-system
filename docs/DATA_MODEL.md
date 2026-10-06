@@ -28,6 +28,7 @@ erDiagram
     ORDER ||--|{ ORDER_ITEM : contains
     PRODUCT o|--o{ ORDER_ITEM : references
     ORDER ||--o| PAYMENT_CLAIM : receives
+    ORDER ||--o| PAYMENT_SLIP : stores
     ORDER ||--o{ MANUAL_REFUND : records
 ```
 
@@ -115,6 +116,10 @@ Stores tenant/branch/order scope, optional current product reference, immutable 
 ### PaymentClaim
 
 One optional claim per order with customer reference/note, SUBMITTED, VERIFIED, or REJECTED state, and staff review metadata. It is a review signal, not proof that funds settled.
+
+### PaymentSlip
+
+One optional customer image per PromptPay order. PostgreSQL stores a private S3 object key, normalized JPEG size/type, image hash, optional decoded QR hash, QR-readability flag, duplicate warning, and upload time. The raw QR contents and object key never appear in public order responses. Replacing a slip updates this row and removes the previous object after the database transaction. A slip submits a claim but never changes payment status.
 
 ### ManualRefund
 

@@ -77,7 +77,7 @@ npm run dev
 
 Open `http://localhost:3010/signup` and register a restaurant. Onboarding guides you through categories, products, service points, QR printing, and a first test order. The web app listens on 3010, NestJS on 3011, and the local PostgreSQL Compose service on 5444. `APP_ORIGIN` must match the browser origin exactly. For phone testing, use an HTTPS origin reachable from the phone and print QR codes from that origin.
 
-Password reset and staff email invitations require a verified sender domain plus `RESEND_API_KEY` and `EMAIL_FROM`; see the [account and operations setup guide](docs/OPERATIONS_SETUP.md). Without email delivery, existing logins continue to work but reset and invitation requests are unavailable.
+Password reset and staff email invitations require a verified sender domain plus `RESEND_API_KEY` and `EMAIL_FROM`; see the [account and operations setup guide](docs/OPERATIONS_SETUP.md). Without email delivery, existing logins continue to work but reset and invitation requests are unavailable. Optional PromptPay slip upload requires a private S3 bucket and API credentials; its image/QR checks help staff review and never confirm settlement.
 
 Migrations seed two _plan definitions_ (`starter`: one branch, `standard`: two branches) without seeding a default restaurant or password. New restaurants begin on a 30-day trial representation. Prices and subscription collection are business decisions, not implemented as automatic billing. To add a platform operator, set `PLATFORM_ADMIN_EMAIL` and `PLATFORM_ADMIN_PASSWORD` (12+ characters) and run `npm run db:seed`; restaurant owners sign up themselves. The seed does not overwrite an existing password.
 
