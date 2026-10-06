@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { Prisma, OrderStatus } from '@repo/prisma';
@@ -17,6 +18,7 @@ import {
   branchDay,
 } from './rules';
 import type { AuthRequest } from '../security/auth';
+import { inspectSlip, PaymentSlipStorage } from './payment-slip.storage';
 const include = {
   items: true,
   session: {
@@ -33,6 +35,16 @@ const include = {
       reviewNote: true,
     },
   },
+  paymentSlip: {
+    select: {
+      id: true,
+      contentType: true,
+      byteSize: true,
+      qrReadable: true,
+      duplicateWarning: true,
+      uploadedAt: true,
+    },
+  },
 } as const;
 const staffInclude = {
   ...include,
@@ -40,9 +52,11 @@ const staffInclude = {
 };
 @Injectable()
 export class OrdersService {
+  private readonly logger = new Logger(OrdersService.name);
   constructor(
     private readonly db: PrismaService,
     private readonly events: OrderEvents,
+    private readonly slipStorage: PaymentSlipStorage,
   ) {}
   async target(kind: 'q' | 's', token: string) {
     if (kind === 'q') {
@@ -408,6 +422,178 @@ export class OrdersService {
     });
     this.events.publish(order.branchId, 'changed', order.id);
     return this.safe(order);
+  }
+  async submitPaymentSlip(
+    kind: 'q' | 's',
+    token: string,
+    id: string,
+    file: Express.Multer.File,
+    body: unknown,
+  ) {
+    if (!this.slipStorage.enabled)
+      throw new BadRequestException('Slip upload is not available');
+    const data = parse(
+      z
+        .object({
+          reference: z.string().trim().min(2).max(100).optional(),
+          note: z.string().trim().max(240).optional(),
+        })
+        .strict(),
+      body,
+    );
+    const current = await this.customerOrder(kind, token, id);
+    if (
+      current.paymentMethod !== 'PROMPTPAY' ||
+      current.paymentStatus !== 'PENDING' ||
+      current.status === 'CANCELLED'
+    )
+      throw new ConflictException('This payment cannot accept a slip');
+    const inspected = await inspectSlip(file);
+    const existing = await this.db.client.paymentSlip.findFirst({
+      where: {
+        tenantId: current.tenantId,
+        branchId: current.branchId,
+        orderId: id,
+      },
+    });
+    if (
+      existing?.sha256 === inspected.sha256 &&
+      existing.qrPayloadHash === inspected.qrPayloadHash
+    )
+      return this.submitPaymentClaim(kind, token, id, data);
+    const objectKey = await this.slipStorage.put(
+      {
+        tenantId: current.tenantId,
+        branchId: current.branchId,
+        orderId: id,
+      },
+      inspected.buffer,
+    );
+    let previousKey: string | null = null;
+    let order;
+    try {
+      order = await this.db.client.$transaction(async (tx) => {
+        const destination = await this.targetInTransaction(tx, kind, token);
+        if (
+          destination.tenantId !== current.tenantId ||
+          destination.branchId !== current.branchId ||
+          (kind === 's'
+            ? destination.session?.id !== current.sessionId
+            : destination.point?.id !== current.servicePointId)
+        )
+          throw new ConflictException('The QR destination changed');
+        await tx.$queryRaw`SELECT id FROM "Order" WHERE id = ${id} AND "tenantId" = ${current.tenantId} AND "branchId" = ${current.branchId} FOR UPDATE`;
+        const locked = await tx.order.findFirst({
+          where: {
+            id,
+            tenantId: current.tenantId,
+            branchId: current.branchId,
+            ...(kind === 's'
+              ? { sessionId: current.sessionId }
+              : { servicePointId: current.servicePointId }),
+          },
+        });
+        if (
+          !locked ||
+          locked.paymentMethod !== 'PROMPTPAY' ||
+          locked.paymentStatus !== 'PENDING' ||
+          locked.status === 'CANCELLED'
+        )
+          throw new ConflictException('This payment cannot accept a slip');
+        const prior = await tx.paymentSlip.findUnique({
+          where: { orderId: id },
+        });
+        previousKey = prior?.objectKey || null;
+        // Serialize checks for the same slip QR across different service points.
+        const duplicateKey = `${locked.tenantId}:${locked.branchId}:${inspected.qrPayloadHash || inspected.sha256}`;
+        await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${duplicateKey}, 0))::text`;
+        const duplicate = await tx.paymentSlip.findFirst({
+          where: {
+            tenantId: locked.tenantId,
+            branchId: locked.branchId,
+            orderId: { not: id },
+            OR: [
+              { sha256: inspected.sha256 },
+              ...(inspected.qrPayloadHash
+                ? [{ qrPayloadHash: inspected.qrPayloadHash }]
+                : []),
+            ],
+          },
+          select: { id: true },
+        });
+        await tx.paymentSlip.upsert({
+          where: { orderId: id },
+          create: {
+            tenantId: locked.tenantId,
+            branchId: locked.branchId,
+            orderId: id,
+            objectKey,
+            contentType: inspected.contentType,
+            byteSize: inspected.buffer.length,
+            sha256: inspected.sha256,
+            qrPayloadHash: inspected.qrPayloadHash,
+            qrReadable: inspected.qrReadable,
+            duplicateWarning: Boolean(duplicate),
+          },
+          update: {
+            objectKey,
+            contentType: inspected.contentType,
+            byteSize: inspected.buffer.length,
+            sha256: inspected.sha256,
+            qrPayloadHash: inspected.qrPayloadHash,
+            qrReadable: inspected.qrReadable,
+            duplicateWarning: Boolean(duplicate),
+            uploadedAt: new Date(),
+          },
+        });
+        await tx.paymentClaim.upsert({
+          where: { orderId: id },
+          create: {
+            tenantId: locked.tenantId,
+            branchId: locked.branchId,
+            orderId: id,
+            customerReference: data.reference || null,
+            customerNote: data.note || null,
+          },
+          update: {
+            status: 'SUBMITTED',
+            customerReference: data.reference || null,
+            customerNote: data.note || null,
+            submittedAt: new Date(),
+            reviewedAt: null,
+            reviewedBy: null,
+            reviewNote: null,
+          },
+        });
+        return tx.order.findUniqueOrThrow({ where: { id }, include });
+      });
+    } catch (error) {
+      await this.slipStorage
+        .remove(objectKey)
+        .catch(() =>
+          this.logger.warn(
+            'Could not remove an upload after its database transaction failed',
+          ),
+        );
+      throw error;
+    }
+    if (previousKey && previousKey !== objectKey)
+      await this.slipStorage
+        .remove(previousKey)
+        .catch(() =>
+          this.logger.warn('Could not remove a replaced payment slip object'),
+        );
+    this.events.publish(order.branchId, 'changed', order.id);
+    return this.safe(order);
+  }
+
+  async paymentSlipUrl(req: AuthRequest, id: string) {
+    const slip = await this.db.client.paymentSlip.findFirst({
+      where: { tenantId: req.tenantId, branchId: req.branchId, orderId: id },
+      select: { objectKey: true },
+    });
+    if (!slip) throw new NotFoundException('Payment slip not found');
+    return { url: await this.slipStorage.signedView(slip.objectKey) };
   }
   async list(req: AuthRequest, history = false, cursor?: string) {
     const where = {

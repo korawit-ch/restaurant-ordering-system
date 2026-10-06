@@ -10,7 +10,11 @@ import {
   Req,
   Sse,
   BadRequestException,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { z } from 'zod';
 import { takeUntil, timer } from 'rxjs';
 import { OrdersService } from './orders.service';
@@ -18,6 +22,7 @@ import { OrderEvents } from './events';
 import { parse } from './rules';
 import { MemberGuard, requireRole, type AuthRequest } from '../security/auth';
 import { PaymentService } from './payment.service';
+import { MAX_SLIP_BYTES } from './payment-slip.storage';
 @Controller('public/:kind/:token')
 export class CustomerController {
   constructor(
@@ -65,6 +70,28 @@ export class CustomerController {
   ) {
     return this.orders.submitPaymentClaim(this.kind(kind), token, id, body);
   }
+  @Post('orders/:id/payment-slip')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: MAX_SLIP_BYTES, files: 1, fields: 2, parts: 3 },
+    }),
+  )
+  uploadSlip(
+    @Param('kind') kind: string,
+    @Param('token') token: string,
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Body() body: unknown,
+  ) {
+    return this.orders.submitPaymentSlip(
+      this.kind(kind),
+      token,
+      id,
+      file,
+      body,
+    );
+  }
 }
 @Controller('staff')
 @UseGuards(MemberGuard)
@@ -83,6 +110,12 @@ export class StaffController {
   }
   @Get('orders/:id') detail(@Req() req: AuthRequest, @Param('id') id: string) {
     return this.orders.detail(req, id);
+  }
+  @Get('orders/:id/payment-slip') slip(
+    @Req() req: AuthRequest,
+    @Param('id') id: string,
+  ) {
+    return this.orders.paymentSlipUrl(req, id);
   }
   @Get('summary') summary(@Req() req: AuthRequest) {
     return this.orders.summary(req);

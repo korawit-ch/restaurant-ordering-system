@@ -134,6 +134,14 @@ export interface Order {
   paidAt: string | null;
   paymentReference: string | null;
   paymentNote: string | null;
+  paymentSlip?: {
+    id: string;
+    contentType: string;
+    byteSize: number;
+    qrReadable: boolean;
+    duplicateWarning: boolean;
+    uploadedAt: string;
+  } | null;
   paymentClaim?: {
     status: PaymentClaimStatus;
     customerReference: string | null;

@@ -179,6 +179,7 @@ model Branch {
   orderSessions OrderSession[]
   orders      Order[]
   paymentClaims PaymentClaim[]
+  paymentSlips PaymentSlip[]
   refunds     ManualRefund[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -352,6 +353,7 @@ model Order {
   paymentReference String?
   paymentNote    String?
   paymentClaim   PaymentClaim?
+  paymentSlip    PaymentSlip?
   refunds        ManualRefund[]
   items          OrderItem[]
   createdAt      DateTime       @default(now())
@@ -381,6 +383,26 @@ model PaymentClaim {
   updatedAt         DateTime           @updatedAt
   @@unique([tenantId, branchId, orderId])
   @@index([tenantId, branchId, status, submittedAt])
+}
+
+model PaymentSlip {
+  id              String   @id @default(uuid())
+  tenantId        String
+  branchId        String
+  branch          Branch   @relation(fields: [tenantId, branchId], references: [tenantId, id], onDelete: Restrict)
+  orderId         String   @unique
+  order           Order    @relation(fields: [tenantId, branchId, orderId], references: [tenantId, branchId, id], onDelete: Restrict)
+  objectKey       String   @unique
+  contentType     String
+  byteSize        Int
+  sha256          String
+  qrPayloadHash   String?
+  qrReadable      Boolean
+  duplicateWarning Boolean @default(false)
+  uploadedAt      DateTime @default(now())
+  @@unique([tenantId, branchId, orderId])
+  @@index([tenantId, branchId, sha256])
+  @@index([tenantId, branchId, qrPayloadHash])
 }
 
 model ManualRefund {

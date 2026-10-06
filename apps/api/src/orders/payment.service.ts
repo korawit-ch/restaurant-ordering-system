@@ -7,16 +7,21 @@ import type { AuthRequest } from '../security/auth';
 import { PrismaService } from '../prisma/prisma.service';
 import QRCode from 'qrcode';
 import generatePayload from 'promptpay-qr';
+import { PaymentSlipStorage } from './payment-slip.storage';
 export interface PaymentInstructions {
   method: 'PROMPTPAY';
   amount: string;
   payload: string;
   svg: string;
   manualConfirmation: true;
+  slipUploadEnabled: boolean;
 }
 @Injectable()
 export class PaymentService {
-  constructor(private readonly db: PrismaService) {}
+  constructor(
+    private readonly db: PrismaService,
+    private readonly slips: PaymentSlipStorage,
+  ) {}
   private async promptpay(
     branchId: string,
     tenantId: string,
@@ -42,6 +47,7 @@ export class PaymentService {
       payload,
       svg,
       manualConfirmation: true,
+      slipUploadEnabled: this.slips.enabled,
     };
   }
   async orderPromptPay(order: {

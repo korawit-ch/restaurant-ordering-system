@@ -32,9 +32,14 @@ export const orderingApi = {
   order: (kind: 'q' | 's', token: string, id: string) =>
     endpoint<Order>(`${pub(kind, token)}/orders/${id}`),
   orderPromptpay: (kind: 'q' | 's', token: string, id: string) =>
-    endpoint<{ svg: string; amount: string; manualConfirmation: true }>(
-      `${pub(kind, token)}/orders/${id}/promptpay`,
-    ),
+    endpoint<{
+      svg: string;
+      amount: string;
+      manualConfirmation: true;
+      slipUploadEnabled: boolean;
+    }>(`${pub(kind, token)}/orders/${id}/promptpay`),
+  paymentSlipUrl: (id: string) =>
+    endpoint<{ url: string }>(`/staff/orders/${id}/payment-slip`),
   submitPaymentClaim: (
     kind: 'q' | 's',
     token: string,

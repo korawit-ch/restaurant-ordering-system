@@ -17,6 +17,7 @@ import {
 import { EmailService } from './security/email.service';
 import { OrdersService } from './orders/orders.service';
 import { PaymentService } from './orders/payment.service';
+import { PaymentSlipStorage } from './orders/payment-slip.storage';
 import { OrderEvents } from './orders/events';
 import {
   CustomerController,
@@ -46,6 +47,7 @@ import { TenancyController } from './tenancy/tenancy.controller';
     EmailService,
     OrdersService,
     PaymentService,
+    PaymentSlipStorage,
     OrderEvents,
   ],
 })

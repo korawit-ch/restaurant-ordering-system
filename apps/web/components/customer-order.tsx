@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { orderingApi } from '@repo/api-client';
-import { clientFetch } from '../lib/fetch/client';
+import { ApiError, clientFetch } from '../lib/fetch/client';
 import { ErrorNotice, money, Status } from './shared';
 export function CustomerOrder({
   kind,
@@ -16,8 +16,11 @@ export function CustomerOrder({
 }) {
   const [reference, setReference] = useState('');
   const [note, setNote] = useState('');
+  const [slip, setSlip] = useState<File | null>(null);
   const [claimBusy, setClaimBusy] = useState(false);
   const [claimError, setClaimError] = useState<unknown>(null);
+  let submitLabel = slip ? 'Upload slip and notify staff' : 'I have paid';
+  if (claimBusy) submitLabel = 'Submitting…';
   const query = useQuery({
     queryKey: ['order', kind, token, id],
     queryFn: () => clientFetch(orderingApi.order(kind, token, id)),
@@ -35,12 +38,34 @@ export function CustomerOrder({
     setClaimBusy(true);
     setClaimError(null);
     try {
-      await clientFetch(
-        orderingApi.submitPaymentClaim(kind, token, id, {
-          ...(reference.trim() ? { reference: reference.trim() } : {}),
-          ...(note.trim() ? { note: note.trim() } : {}),
-        }),
-      );
+      if (slip) {
+        if (slip.size > 5 * 1024 * 1024)
+          throw new Error('Choose a slip image smaller than 5 MB.');
+        const form = new FormData();
+        form.set('file', slip);
+        if (reference.trim()) form.set('reference', reference.trim());
+        if (note.trim()) form.set('note', note.trim());
+        const response = await fetch(
+          `/api/public/${kind}/${encodeURIComponent(token)}/orders/${encodeURIComponent(id)}/payment-slip`,
+          { method: 'POST', credentials: 'same-origin', body: form },
+        );
+        if (!response.ok) {
+          const body = (await response.json().catch(() => ({}))) as {
+            message?: string;
+          };
+          throw new ApiError(
+            body.message || 'Slip upload failed. Please try again.',
+            response.status,
+          );
+        }
+      } else {
+        await clientFetch(
+          orderingApi.submitPaymentClaim(kind, token, id, {
+            ...(reference.trim() ? { reference: reference.trim() } : {}),
+            ...(note.trim() ? { note: note.trim() } : {}),
+          }),
+        );
+      }
       await query.refetch();
     } catch (error) {
       setClaimError(error);
@@ -100,8 +125,9 @@ export function CustomerOrder({
               </p>
               {o.paymentClaim?.status === 'SUBMITTED' ? (
                 <div className="notice">
-                  Payment sent notice submitted. Staff is checking the bank
+                  Payment evidence submitted. Staff is checking the bank
                   account.
+                  {o.paymentSlip && ' Your slip was received.'}
                 </div>
               ) : (
                 <div className="payment-claim">
@@ -131,6 +157,24 @@ export function CustomerOrder({
                       placeholder="Paying bank or transfer time"
                     />
                   </label>
+                  {pay.data?.slipUploadEnabled && (
+                    <label>
+                      Bank slip image (optional, JPEG or PNG, up to 5 MB)
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png"
+                        onChange={(event) =>
+                          setSlip(event.target.files?.[0] || null)
+                        }
+                      />
+                    </label>
+                  )}
+                  {slip && (
+                    <small>
+                      Staff will review this image against the receiving bank
+                      account.
+                    </small>
+                  )}
                   <ErrorNotice error={claimError} />
                   <button
                     className="button primary"
@@ -138,7 +182,7 @@ export function CustomerOrder({
                     disabled={claimBusy}
                     onClick={() => void submitClaim()}
                   >
-                    {claimBusy ? 'Submitting…' : 'I have paid'}
+                    {submitLabel}
                   </button>
                 </div>
               )}
