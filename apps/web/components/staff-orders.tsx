@@ -108,9 +108,11 @@ function Orders({ history, id }: { history: boolean; id?: string }) {
   const orders = query.data?.orders || [];
   return (
     <>
-      <div className="page-heading">
+      <div className="mb-[30px] flex items-center justify-between gap-[25px] max-[1100px]:items-start max-[760px]:flex-col max-[760px]:gap-2.5">
         <div>
-          <div className="eyebrow">LIVE SERVICE</div>
+          <div className="text-[10px] font-bold tracking-[2px]">
+            LIVE SERVICE
+          </div>
           <h1>
             {id
               ? 'Order detail'
@@ -120,8 +122,8 @@ function Orders({ history, id }: { history: boolean; id?: string }) {
           </h1>
           <p>Orders stay in the database and reload after connection loss.</p>
         </div>
-        <div className="connection">
-          <span className={connected ? 'online' : ''}>
+        <div className="flex flex-col gap-3 text-xs whitespace-nowrap max-[760px]:flex-row max-[760px]:flex-wrap max-[760px]:items-center">
+          <span className={connected ? 'text-[#38714e]' : 'text-[#b06a28]'}>
             {history
               ? 'History'
               : connected
@@ -147,7 +149,10 @@ function Orders({ history, id }: { history: boolean; id?: string }) {
                 {keepAwake ? 'Allow screen sleep' : 'Keep screen awake'}
               </Action>
               {keepAwake && (
-                <small className="wake-status" role="status">
+                <small
+                  className="max-w-[230px] whitespace-normal"
+                  role="status"
+                >
                   {wakeMessages[wakeLock.status]}
                 </small>
               )}
@@ -161,7 +166,7 @@ function Orders({ history, id }: { history: boolean; id?: string }) {
         </div>
       </div>
       {!id && summary.data && (
-        <div className="summary-strip">
+        <div className="border-orderly-line bg-orderly-surface [&>div]:border-orderly-line [&_small]:text-orderly-muted mb-[30px] grid grid-cols-[1.5fr_1fr_1fr_1fr] rounded-[15px] border p-[22px] max-[1100px]:p-[18px] max-[760px]:grid-cols-2 max-[760px]:gap-[18px] [&_small]:text-[11px] [&_strong]:text-2xl [&>div]:flex [&>div]:flex-col [&>div]:gap-[7px] [&>div]:border-r [&>div]:px-5 max-[760px]:[&>div]:border-0 max-[760px]:[&>div]:p-0 [&>div:first-child]:pl-0 [&>div:last-child]:border-0">
           <div>
             <small>Today · {summary.data.date}</small>
             <strong>{summary.data.orderCount} orders</strong>
@@ -182,7 +187,7 @@ function Orders({ history, id }: { history: boolean; id?: string }) {
       )}
       <ErrorNotice error={query.error} />
       {orders.length ? (
-        <div className="orders-grid">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] items-start gap-5 max-[760px]:grid-cols-1">
           {orders.map((o: Order) => (
             <OrderCard
               key={o.id}
@@ -193,7 +198,7 @@ function Orders({ history, id }: { history: boolean; id?: string }) {
           ))}
         </div>
       ) : (
-        <div className="empty">
+        <div className="rounded-2xl border border-dashed border-[#bcc8b7] bg-[#f8f8f1] px-[25px] py-20 text-center">
           {query.isPending ? 'Loading…' : 'No orders here yet.'}
         </div>
       )}

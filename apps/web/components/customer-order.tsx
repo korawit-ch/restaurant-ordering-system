@@ -74,26 +74,33 @@ export function CustomerOrder({
     }
   }
   return (
-    <main className="customer confirmation">
-      <div className="wordmark">ORDERLY</div>
+    <main className="mx-auto max-w-[650px] px-[22px] pt-6 pb-[110px] text-center">
+      <div className="flex items-center gap-2.5 text-xs font-extrabold tracking-[1.3px]">
+        ORDERLY
+      </div>
       <ErrorNotice error={query.error} />
       {!o ? (
         <p>Loading order…</p>
       ) : (
         <>
-          <div className="success-mark">✓</div>
-          <div className="eyebrow">
+          <div className="bg-orderly-accent mx-auto mt-10 mb-[15px] grid size-[70px] place-items-center rounded-full text-4xl">
+            ✓
+          </div>
+          <div className="mt-[26px] text-[10px] font-bold tracking-[2px]">
             {o.locationSnapshot || 'PICKUP'} · ORDER #{o.orderNumber}
           </div>
           <h1>Order received.</h1>
           <p>Staff can see your order. Check here for updates.</p>
-          <div className="status-line">
+          <div className="flex justify-center gap-2.5">
             <Status value={o.status} />
             <Status value={o.paymentStatus} />
           </div>
-          <section className="panel">
+          <section className="border-orderly-line bg-orderly-surface my-5 rounded-[18px] border p-6">
             {o.items.map((i) => (
-              <div className="checkout-row" key={i.id}>
+              <div
+                className="border-orderly-line flex items-center justify-between gap-[15px] border-b py-[14px]"
+                key={i.id}
+              >
                 <div>
                   <strong>
                     {i.quantity} × {i.productNameSnapshot}
@@ -103,17 +110,17 @@ export function CustomerOrder({
                 <span>{money(i.lineTotal)}</span>
               </div>
             ))}
-            <div className="total">
+            <div className="flex items-center justify-between pt-5">
               <span>{o.paymentMethod || 'Pay at checkout'}</span>
               <strong>{money(o.total)}</strong>
             </div>
           </section>
           {o.paymentStatus === 'PENDING' && o.paymentMethod === 'PROMPTPAY' && (
-            <section className="panel">
+            <section className="border-orderly-line bg-orderly-surface my-5 rounded-[18px] border p-6">
               <h2>Pay {money(o.total)} with PromptPay</h2>
               {pay.data && (
                 <img
-                  className="payment-qr"
+                  className="mx-auto my-5 block w-[260px] max-w-full"
                   src={`data:image/svg+xml,${encodeURIComponent(pay.data.svg)}`}
                   alt="PromptPay QR"
                 />
@@ -124,15 +131,15 @@ export function CustomerOrder({
                 until staff sees the deposit in the restaurant account.
               </p>
               {o.paymentClaim?.status === 'SUBMITTED' ? (
-                <div className="notice">
+                <div className="my-5 rounded-xl border border-[#e2d19b] bg-[#f4ebce] p-[18px] text-[#6c5427]">
                   Payment evidence submitted. Staff is checking the bank
                   account.
                   {o.paymentSlip && ' Your slip was received.'}
                 </div>
               ) : (
-                <div className="payment-claim">
+                <div className="mt-4 grid gap-3">
                   {o.paymentClaim?.status === 'REJECTED' && (
-                    <div className="notice error">
+                    <div className="my-5 my-[15px] rounded-xl border border-[#e2d19b] border-[#edb5a3] bg-[#f4ebce] bg-[#ffe7df] p-[14px] p-[18px] text-[#6c5427] text-[#882e1b]">
                       Staff could not match the payment
                       {o.paymentClaim.reviewNote
                         ? `: ${o.paymentClaim.reviewNote}`
@@ -177,7 +184,7 @@ export function CustomerOrder({
                   )}
                   <ErrorNotice error={claimError} />
                   <button
-                    className="button primary"
+                    className="border-orderly-green bg-orderly-green flex min-h-[50px] items-center justify-center gap-[15px] rounded-[11px] border px-5 py-3 text-[15px] font-semibold text-white no-underline hover:bg-[#163e2e]"
                     type="button"
                     disabled={claimBusy}
                     onClick={() => void submitClaim()}
@@ -189,9 +196,14 @@ export function CustomerOrder({
             </section>
           )}
           {o.paymentStatus === 'PENDING' && o.paymentMethod === 'CASH' && (
-            <div className="notice">Pay staff {money(o.total)} in cash.</div>
+            <div className="my-5 rounded-xl border border-[#e2d19b] bg-[#f4ebce] p-[18px] text-[#6c5427]">
+              Pay staff {money(o.total)} in cash.
+            </div>
           )}
-          <Link className="button primary" href={`/${kind}/${token}`}>
+          <Link
+            className="border-orderly-green bg-orderly-green flex min-h-[50px] items-center justify-center gap-[15px] rounded-[11px] border px-5 py-3 text-[15px] font-semibold text-white no-underline hover:bg-[#163e2e]"
+            href={`/${kind}/${token}`}
+          >
             Order again →
           </Link>
         </>

@@ -17,7 +17,7 @@ export default function Platform() {
         branch workspace.
       </p>
       <ErrorNotice error={q.error} />
-      <div className="panel management-list">
+      <div className="border-orderly-line bg-orderly-surface my-5 rounded-[18px] border p-6 px-[22px]">
         {q.data?.map((raw, i) => {
           const t = raw as {
             id: string;
@@ -28,8 +28,11 @@ export default function Platform() {
             subscription?: { status: string; plan: { name: string } };
           };
           return (
-            <div className="management-row" key={t.id || i}>
-              <strong className="management-name">
+            <div
+              className="border-orderly-line flex items-center gap-5 border-b py-5 last:border-0 max-[760px]:flex-wrap max-[760px]:gap-2.5"
+              key={t.id || i}
+            >
+              <strong className="flex flex-1 flex-col gap-[6px] max-[760px]:min-w-[130px]">
                 {t.name}
                 <small>{t.slug}</small>
               </strong>

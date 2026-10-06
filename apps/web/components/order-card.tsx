@@ -169,18 +169,24 @@ export function OrderCard({
     }
   }
   return (
-    <article className={`order-card ${highlight ? 'fresh' : ''}`}>
-      <div className="order-card-top">
+    <article
+      className={`bg-orderly-surface rounded-2xl border ${highlight ? 'border-2 border-[#a6bb4e] p-[22px]' : 'border-orderly-line p-[23px]'}`}
+    >
+      <div className="border-orderly-line flex items-start justify-between border-b pb-[17px]">
         <div>
-          <small>{order.servicePoint?.type || 'LOCATION'}</small>
+          <small className="text-orderly-muted text-[10px] tracking-[2px]">
+            {order.servicePoint?.type || 'LOCATION'}
+          </small>
           <Link href={`/staff/orders/${order.id}`}>
-            <h2>{order.locationSnapshot || `#${order.orderNumber}`}</h2>
+            <h2 className="text-[42px] leading-[1.15] tracking-[-1px]">
+              {order.locationSnapshot || `#${order.orderNumber}`}
+            </h2>
           </Link>
           {order.session?.description && <p>{order.session.description}</p>}
         </div>
-        <div className="order-meta">
+        <div className="flex flex-col items-end gap-[5px] text-xs">
           <strong>#{order.orderNumber}</strong>
-          <time>
+          <time className="text-orderly-muted">
             {new Date(order.createdAt).toLocaleTimeString('en-GB', {
               hour: '2-digit',
               minute: '2-digit',
@@ -189,20 +195,24 @@ export function OrderCard({
           <Status value={order.status} />
         </div>
       </div>
-      <div className="order-lines">
+      <div className="flex flex-col gap-[14px] py-5">
         {order.items.map((i) => (
-          <div key={i.id}>
-            <span className="item-count">{i.quantity}</span>
+          <div key={i.id} className="flex items-center gap-3 text-[15px]">
+            <span className="grid h-[30px] min-w-[30px] place-items-center rounded-[5px] bg-[#eeeee4] font-bold">
+              {i.quantity}
+            </span>
             <span>
               {i.productNameSnapshot}
               {i.note && <small> · {i.note}</small>}
             </span>
-            <small>{money(i.lineTotal)}</small>
+            <small className="text-orderly-muted ml-auto text-xs">
+              {money(i.lineTotal)}
+            </small>
           </div>
         ))}
       </div>
-      <div className="order-total">
-        <strong>{money(order.total)}</strong>
+      <div className="border-orderly-line flex items-center justify-between border-t border-dashed py-[18px]">
+        <strong className="text-[25px]">{money(order.total)}</strong>
         <span>
           {order.paymentMethod || 'CHECKOUT'}{' '}
           <Status value={order.paymentStatus} />
@@ -210,7 +220,7 @@ export function OrderCard({
       </div>
       {order.paymentMethod === 'PROMPTPAY' &&
         order.paymentStatus === 'PENDING' && (
-          <div className="payment-review">
+          <div className="[&_small]:text-orderly-muted mt-4 grid gap-3 rounded-[10px] border border-[#d5c96c] bg-[#fffbe0] p-3">
             {order.paymentClaim?.status === 'SUBMITTED' ? (
               <>
                 <strong>Customer says payment was sent</strong>
@@ -237,7 +247,7 @@ export function OrderCard({
                       </strong>
                     )}
                     <button
-                      className="text-button"
+                      className="border-0 bg-transparent pl-0"
                       disabled={busy}
                       onClick={() => void viewSlip()}
                     >
@@ -246,7 +256,7 @@ export function OrderCard({
                   </>
                 )}
                 <button
-                  className="text-button danger"
+                  className="border-0 bg-transparent pl-0 text-[#a8442c]"
                   disabled={busy}
                   onClick={() => void rejectClaim()}
                 >
@@ -259,13 +269,13 @@ export function OrderCard({
           </div>
         )}
       {order.paymentStatus === 'PAID' && order.paymentReference && (
-        <div className="payment-review">
+        <div className="[&_small]:text-orderly-muted mt-4 grid gap-3 rounded-[10px] border border-[#d5c96c] bg-[#fffbe0] p-3">
           <strong>Payment verified manually</strong>
           <small>Bank reference: {order.paymentReference}</small>
           {order.paymentNote && <small>{order.paymentNote}</small>}
           {order.paymentSlip && (
             <button
-              className="text-button"
+              className="border-0 bg-transparent pl-0"
               disabled={busy}
               onClick={() => void viewSlip()}
             >
@@ -275,7 +285,7 @@ export function OrderCard({
         </div>
       )}
       <ErrorNotice error={error} />
-      <div className="order-actions">
+      <div className="flex flex-col gap-2">
         {order.paymentMethod &&
           order.paymentStatus === 'PENDING' &&
           order.status !== 'CANCELLED' && (
@@ -299,7 +309,7 @@ export function OrderCard({
         )}
         {active && order.paymentStatus !== 'PAID' && (
           <button
-            className="text-button danger"
+            className="border-0 bg-transparent pl-0 text-[#a8442c]"
             disabled={busy}
             onClick={() => void update('CANCELLED')}
           >
@@ -308,8 +318,8 @@ export function OrderCard({
         )}
       </div>
       {detailed && order.paymentStatus === 'PAID' && (
-        <section className="refunds">
-          <div className="refund-heading">
+        <section className="border-orderly-line mt-4 grid gap-3 border-t pt-[18px]">
+          <div className="flex items-center justify-between gap-3">
             <h3>Manual refunds</h3>
             <Action
               secondary
@@ -321,7 +331,10 @@ export function OrderCard({
           </div>
           {order.refunds?.length ? (
             order.refunds.map((refund) => (
-              <div className="refund-row" key={refund.id}>
+              <div
+                className="border-orderly-line flex items-center justify-between gap-3 rounded-[10px] border p-3"
+                key={refund.id}
+              >
                 <div>
                   <strong>{money(refund.amount)}</strong>{' '}
                   <Status value={refund.status} />
@@ -331,9 +344,9 @@ export function OrderCard({
                   </small>
                 </div>
                 {refund.status === 'PENDING' && (
-                  <div className="refund-actions">
+                  <div className="flex flex-wrap items-center justify-end gap-3">
                     <button
-                      className="text-button"
+                      className="border-0 bg-transparent pl-0"
                       disabled={busy}
                       onClick={() =>
                         void updateRefund(refund.id, refund.method, 'complete')
@@ -342,7 +355,7 @@ export function OrderCard({
                       Mark money returned
                     </button>
                     <button
-                      className="text-button danger"
+                      className="border-0 bg-transparent pl-0 text-[#a8442c]"
                       disabled={busy}
                       onClick={() =>
                         void updateRefund(refund.id, refund.method, 'cancel')
