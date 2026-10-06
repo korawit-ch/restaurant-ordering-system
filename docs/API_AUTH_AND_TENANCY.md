@@ -13,12 +13,15 @@ Prefix: /public/:kind/:token, where kind q is a permanent service-point QR and s
 - GET /orders/:id returns an order only when it belongs to the QR destination or session.
 - GET /orders/:id/promptpay returns instructions for a pending PromptPay order.
 - POST /orders/:id/payment-claim submits a manual-review signal.
+- POST /orders/:id/payment-slip accepts a JPEG or PNG slip when private S3 storage is configured. It performs image/QR checks and submits the claim for staff review.
 
 The token is a limited capability. An order ID alone is insufficient because reads and payment claims are constrained to the resolved token context.
 
 ### Authenticated restaurant routes
 
 /staff covers active orders, history, reports, payment confirmation, claim rejection, refunds, sessions, and SSE. /admin covers categories, products, availability, service points, menus, and configuration. /restaurant covers branch settings, presets, onboarding, staff, invitations, and branches.
+
+GET /staff/orders/:id/payment-slip returns a five-minute S3 viewing URL only after branch membership and order scope are checked.
 
 Controller decorators are the transport source of truth. Protected resource lookups include request tenant and branch scope.
 

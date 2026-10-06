@@ -7,9 +7,20 @@ export class BoundaryMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
+    // Nest mounts this middleware below the app router; req.path can be '/'.
+    const pathname = req.originalUrl.split('?')[0] || '';
     if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
       const origin = process.env.APP_ORIGIN || 'http://localhost:3010';
-      if (req.headers.origin !== origin || !req.is('application/json'))
+      const slipUpload =
+        req.method === 'POST' &&
+        /^\/public\/(q|s)\/[^/]+\/orders\/[^/]+\/payment-slip$/.test(pathname);
+      if (
+        req.headers.origin !== origin ||
+        !(
+          req.is('application/json') ||
+          (slipUpload && req.is('multipart/form-data'))
+        )
+      )
         return res
           .status(403)
           .json({ message: 'Request origin or content type is not allowed' });
@@ -17,8 +28,8 @@ export class BoundaryMiddleware implements NestMiddleware {
     const now = Date.now();
     for (const [key, value] of this.buckets)
       if (value.until < now) this.buckets.delete(key);
-    const login = req.path === '/auth/login';
-    const resetRequest = req.path === '/auth/password/request';
+    const login = pathname === '/auth/login';
+    const resetRequest = pathname === '/auth/password/request';
     if (req.method === 'POST') {
       let bucket = 'write';
       let limit = 240;

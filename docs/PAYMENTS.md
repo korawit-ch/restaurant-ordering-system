@@ -6,7 +6,7 @@ The recommended product direction is:
 
 1. Keep the current manual workflow as the dependable baseline and fallback.
 2. Strengthen per-payment reference capture, duplicate detection, audit history, and refund reporting.
-3. Add optional slip-assisted review only to reduce staff typing; never treat locally parsed evidence as settlement proof.
+3. Use optional private slip upload and local image/QR checks to help staff review; never treat locally parsed evidence as settlement proof.
 4. Add automatic confirmation through a tenant-scoped bank or payment-provider adapter when transaction volume justifies merchant onboarding and provider fees.
 
 Payment state must remain separate from order fulfillment. A payment becoming `PAID` should not silently move an order from `NEW` to `ACCEPTED`, and preparing an order should not imply that money was received.
@@ -38,8 +38,8 @@ For per-order payment:
 1. The API creates the order as `PROMPTPAY / PENDING` using prices and totals calculated from PostgreSQL.
 2. `GET /api/public/:kind/:token/orders/:id/promptpay` returns the amount, raw QR payload, SVG, and `manualConfirmation: true`.
 3. The customer pays in a separate banking application.
-4. The customer may submit a reference and note through `POST /api/public/:kind/:token/orders/:id/payment-claim`.
-5. The API stores one `PaymentClaim` per order as `SUBMITTED` and signals the staff board.
+4. The customer may submit a reference and note through `POST /api/public/:kind/:token/orders/:id/payment-claim`, or attach a JPEG/PNG bank slip through `POST /api/public/:kind/:token/orders/:id/payment-slip` when S3 is configured.
+5. The API stores one `PaymentClaim` per order as `SUBMITTED` and signals the staff board. Slip upload also stores one private `PaymentSlip` record and flags a missing QR or reused image/QR for staff attention.
 6. Staff independently checks the restaurant's receiving bank account.
 7. Staff confirms through `POST /api/staff/orders/:id/payment`. PromptPay confirmation requires a receiving-bank transaction reference.
 8. In one transaction, the order becomes `PAID`, confirmation audit fields are stored, and any claim becomes `VERIFIED`. An unmatched claim can instead become `REJECTED` while the payment remains `PENDING`.
@@ -82,7 +82,7 @@ This path keeps the platform independent of payment gateways and bank APIs. It c
 
 ### Chosen low-cost v1 boundary
 
-Orderly does not require bank-statement import, daily reconciliation batches, slip upload, OCR, or a live payment provider for v1. Staff checks each PromptPay deposit in the restaurant's banking app and records that decision against the individual order or closed session.
+Orderly does not require bank-statement import, daily reconciliation batches, OCR, or a live payment provider for v1. Slip upload is optional and requires private S3 storage. Staff checks each PromptPay deposit in the restaurant's banking app and records that decision against the individual order or closed session.
 
 The minimum durable record is:
 
@@ -132,9 +132,15 @@ Add a payment review queue with filters for:
 
 No daily reconciliation sign-off is required in Orderly v1. A restaurant may still compare the operational payment report with its bank outside the application.
 
-### Optional slip upload as review assistance
+### Private slip upload and initial checks
 
-A customer-uploaded bank slip can reduce typing and help staff find a transfer. Without a trusted verification service or bank inquiry, it must remain **evidence**, not automatic confirmation.
+A customer-uploaded bank slip can help staff find a transfer. Without a trusted verification service or bank inquiry, it remains **evidence**, not automatic confirmation. The implemented path applies to per-order PromptPay; at-checkout session payments still use manual bank review without a customer slip endpoint.
+
+The current API accepts JPEG or PNG up to 5 MB, checks file signatures and decodability, caps input pixels, strips metadata by re-encoding to JPEG, and attempts to decode one QR. It stores only hashes of the image and QR data, then flags an image or QR reused by another order in the same branch. A missing QR or duplicate is shown to staff, but a readable QR cannot establish payment settlement. The image is kept in a private S3 bucket; PostgreSQL stores its key and check results. Staff receive a five-minute signed viewing URL after branch-scoped authentication. The payment remains `PENDING` until staff matches a real deposit and enters the receiving-bank reference.
+
+Set `AWS_REGION` and `PAYMENT_SLIP_S3_BUCKET` on the API. Use an IAM role in production or standard AWS credentials for local development. See [operations setup](OPERATIONS_SETUP.md) for bucket policy and retention.
+
+Future improvements could add OCR, an authoritative slip-verification service, and a malware-scanning gate. The following broader design is **not implemented**:
 
 A safe local pipeline would:
 

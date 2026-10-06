@@ -93,6 +93,25 @@ export function OrderCard({
       setBusy(false);
     }
   }
+  async function viewSlip() {
+    const tab = window.open('', '_blank');
+    if (!tab) {
+      setError(new Error('Allow popups to view the payment slip.'));
+      return;
+    }
+    tab.opener = null;
+    setBusy(true);
+    setError(null);
+    try {
+      const { url } = await clientFetch(orderingApi.paymentSlipUrl(order.id));
+      tab.location.href = url;
+    } catch (error) {
+      tab.close();
+      setError(error);
+    } finally {
+      setBusy(false);
+    }
+  }
   async function createRefund() {
     const amount = prompt('Refund amount in THB:', order.total);
     if (!amount) return;
@@ -203,6 +222,29 @@ export function OrderCard({
                 {order.paymentClaim.customerNote && (
                   <small>{order.paymentClaim.customerNote}</small>
                 )}
+                {order.paymentSlip && (
+                  <>
+                    <small>
+                      Slip image received · QR{' '}
+                      {order.paymentSlip.qrReadable
+                        ? 'readable'
+                        : 'not detected'}
+                    </small>
+                    {order.paymentSlip.duplicateWarning && (
+                      <strong>
+                        Possible duplicate slip or QR used for another order.
+                        Check carefully.
+                      </strong>
+                    )}
+                    <button
+                      className="text-button"
+                      disabled={busy}
+                      onClick={() => void viewSlip()}
+                    >
+                      View customer slip
+                    </button>
+                  </>
+                )}
                 <button
                   className="text-button danger"
                   disabled={busy}
@@ -221,6 +263,15 @@ export function OrderCard({
           <strong>Payment verified manually</strong>
           <small>Bank reference: {order.paymentReference}</small>
           {order.paymentNote && <small>{order.paymentNote}</small>}
+          {order.paymentSlip && (
+            <button
+              className="text-button"
+              disabled={busy}
+              onClick={() => void viewSlip()}
+            >
+              View customer slip
+            </button>
+          )}
         </div>
       )}
       <ErrorNotice error={error} />

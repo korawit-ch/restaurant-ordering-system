@@ -19,6 +19,7 @@ The web app may depend on shared packages. The API may depend on Prisma and shar
 - Server code validates product state and calculates money with Prisma Decimal. Browser totals are advisory only.
 - Order items retain product-name and unit-price snapshots. Historical orders must not change with menu edits.
 - Fulfillment and payment use separate state machines.
+- A customer-uploaded PromptPay slip is review evidence only. QR readability and duplicate checks never mark an order paid; staff must verify the receiving account. Keep slip objects private and scope staff access by tenant and branch.
 - Order creation remains transactional and idempotent. Preserve row locking, serializable isolation, and the tenant-scoped request-key constraint.
 - PostgreSQL is authoritative. SSE is a notification hint; the dashboard must reload state from the API.
 

@@ -16,15 +16,19 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1146.0",
+    "@aws-sdk/s3-request-presigner": "^3.1146.0",
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
     "@nestjs/swagger": "^11.2.3",
     "@repo/prisma": "*",
+    "jsqr": "^1.4.0",
     "promptpay-qr": "^0.5.0",
     "qrcode": "^1.5.4",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
+    "sharp": "^0.35.5",
     "zod": "^3.24.1"
   },
   "devDependencies": {
@@ -36,6 +40,7 @@
     "@repo/jest-config": "*",
     "@repo/typescript-config": "*",
     "@types/express": "^4.17.17",
+    "@types/multer": "^2.3.0",
     "@types/node": "^22.10.7",
     "@types/qrcode": "^1.5.5",
     "@types/supertest": "^6.0.0",

@@ -59,9 +59,9 @@ There is no PostgreSQL row-level security. Protection relies on guards, scoped q
 
 Password login has no MFA, user-facing session management, breach-password screening, or advanced lockout. Add owner MFA, session revocation, security notifications, and credential rotation before higher-risk adoption.
 
-### Future payment slips
+### Payment slip privacy and verification
 
-Slips contain personal and financial data. Store them privately, keep opaque keys and metadata in PostgreSQL, validate actual signatures and size, scan content, use short-lived staff URLs, encrypt at rest, define retention/deletion, and enforce tenant boundaries. A slip assists review but does not prove settlement.
+Slips contain personal and financial data. The current implementation uses private S3 storage, opaque keys, image signature/size checks, metadata stripping, short-lived staff URLs, and tenant-scoped access. A slip assists review but does not prove settlement. Before broad production use, add malware scanning and a formal retention/deletion policy; consider duplicate bank references and stronger audit history.
 
 ## Product and correctness gaps
 

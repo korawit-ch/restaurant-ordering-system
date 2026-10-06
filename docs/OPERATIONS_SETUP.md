@@ -46,6 +46,20 @@ The implementation sequence is:
 
 There is no automatic-verification adapter in this repository yet. The provider, merchant-account model, live/test credentials, and webhook secret are still required decisions. Do not put them in `BranchSettings` as plaintext.
 
+## Optional PromptPay slip storage in AWS S3
+
+This applies to per-order PromptPay claims. It does not enable bank verification or change the cash and at-checkout flows.
+
+1. Create a dedicated S3 bucket in the region nearest the API, for example `ap-southeast-1`. Enable **Block all public access** and default SSE-S3 encryption. Keep object ownership enforced; the app does not set ACLs.
+2. Give the API runtime an IAM role with `s3:PutObject`, `s3:GetObject`, and `s3:DeleteObject` only on `arn:aws:s3:::YOUR_BUCKET/payment-slips/*`. The API does not need bucket listing or public access. For local development, use a named AWS profile or short-lived credentials from the standard AWS SDK credential chain.
+3. Set `AWS_REGION` and `PAYMENT_SLIP_S3_BUCKET` in the API environment and restart it. The supplied Compose file passes `.env` to the API. Do not prefix credentials with `NEXT_PUBLIC_` or expose them to Next.js.
+4. Apply migration `202610060001_payment_slip` with `npm run db:deploy` before restarting the API. Upload an image under a test PromptPay order, check that the payment remains `PENDING`, and view it from an authenticated staff account. A staff member must still confirm the bank deposit and enter its receiving-bank reference.
+5. Decide a retention period with the business and legal adviser before adding an S3 lifecycle expiration rule. If objects are expired independently, PostgreSQL retains slip metadata but the staff viewing link will no longer return the image. Build coordinated metadata cleanup if automatic purging is required.
+
+The upload endpoint accepts JPEG/PNG images up to 5 MB, rejects malformed files, limits decoded pixels, re-encodes to JPEG without EXIF, and attempts QR detection. It flags image or QR hashes used by another order in the same branch. A readable QR is **not** evidence that the receiving account got money. The original QR data is not stored; only its SHA-256 hash is. Staff image links expire after five minutes. No S3 browser CORS policy is needed because the API receives the upload and signs the viewing request.
+
+The current implementation does not run malware scanning. Restrict staff viewing to the re-encoded JPEG and add a scanning/quarantine stage before accepting other file types or broad production use. See the [AWS S3 Block Public Access guide](https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html) and [IAM policy examples](https://docs.aws.amazon.com/AmazonS3/latest/userguide/example-policies-s3.html).
+
 ## Refunds: implemented as a manual operational record
 
 For the PromptPay options above, the cited channel guides do not offer API refunds. Orderly therefore records a manual refund while the restaurant returns money by cash or bank transfer outside the app. From a paid order's detail page, staff can request a full or partial refund with its amount, method, and reason. Pending and completed refunds reserve value so their combined amount cannot exceed the original payment. An owner or manager marks the refund completed only after money is returned; a bank transfer requires its transaction reference. They can cancel a pending request.
