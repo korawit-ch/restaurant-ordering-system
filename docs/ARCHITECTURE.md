@@ -604,6 +604,8 @@ The staff dashboard first loads active orders from PostgreSQL. It then listens t
 
 `OrderEvents` is currently an in-process RxJS `Subject`, so the production topology intentionally runs one API replica. A future multi-replica deployment would need a shared event transport or database-backed notification mechanism. Losing an event does not lose an order because the dashboard also polls and refreshes from PostgreSQL.
 
+The live staff order page offers an optional screen wake lock for an attended tablet. The browser releases it when the page is hidden and the page requests it again when visible. This is a local display setting, not an order-delivery guarantee; SSE, polling, and PostgreSQL remain responsible for order visibility.
+
 ## Deployment structure
 
 ```mermaid

@@ -596,6 +596,10 @@ footer {
 .connection .online {
   color: #38714e;
 }
+.connection .wake-status {
+  max-width: 230px;
+  white-space: normal;
+}
 .summary-strip {
   display: grid;
   grid-template-columns: 1.5fr 1fr 1fr 1fr;
@@ -905,6 +909,7 @@ footer {
   .connection {
     flex-direction: row;
     align-items: center;
+    flex-wrap: wrap;
   }
   .summary-strip {
     grid-template-columns: 1fr 1fr;

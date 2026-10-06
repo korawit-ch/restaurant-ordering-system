@@ -6,6 +6,14 @@ import { clientFetch } from '../lib/fetch/client';
 import { StaffShell } from './staff-shell';
 import { OrderCard } from './order-card';
 import { Action, ErrorNotice, money } from './shared';
+import { useScreenWakeLock } from './use-screen-wake-lock';
+const wakeMessages = {
+  off: '',
+  requesting: 'Requesting screen wake lock…',
+  active: 'Screen will stay awake while this tab is visible.',
+  paused: 'Paused while this tab is hidden.',
+  unavailable: 'Browser or device denied the screen wake lock.',
+};
 export function StaffOrders({
   history = false,
   id,
@@ -22,9 +30,14 @@ export function StaffOrders({
 function Orders({ history, id }: { history: boolean; id?: string }) {
   const cache = useQueryClient(),
     [sound, setSound] = useState(false),
+    [keepAwake, setKeepAwake] = useState(false),
     [connected, setConnected] = useState(false),
     [fresh, setFresh] = useState<string | null>(null);
+  const wakeLock = useScreenWakeLock(keepAwake && !history && !id);
   const known = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    setKeepAwake(localStorage.getItem('orderly-staff-keep-awake') === 'true');
+  }, []);
   const query = useQuery({
     queryKey: ['staff-orders', history, id],
     queryFn: () =>
@@ -118,6 +131,33 @@ function Orders({ history, id }: { history: boolean; id?: string }) {
           <Action secondary onClick={() => setSound(true)}>
             {sound ? 'Sound on' : 'Enable sound'}
           </Action>
+          {!history && !id && (
+            <>
+              <Action
+                secondary
+                onClick={() => {
+                  const next = !keepAwake;
+                  localStorage.setItem(
+                    'orderly-staff-keep-awake',
+                    String(next),
+                  );
+                  setKeepAwake(next);
+                }}
+              >
+                {keepAwake ? 'Allow screen sleep' : 'Keep screen awake'}
+              </Action>
+              {keepAwake && (
+                <small className="wake-status" role="status">
+                  {wakeMessages[wakeLock.status]}
+                </small>
+              )}
+              {keepAwake && wakeLock.status === 'unavailable' && (
+                <Action secondary onClick={wakeLock.retry}>
+                  Retry screen wake lock
+                </Action>
+              )}
+            </>
+          )}
         </div>
       </div>
       {!id && summary.data && (
