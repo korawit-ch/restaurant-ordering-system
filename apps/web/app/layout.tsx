@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { QueryProvider } from '../lib/query';
-import '@repo/ui/styles.css';
 import './globals.css';
 export const metadata: Metadata = {
   title: 'Orderly · QR ordering for small restaurants',
