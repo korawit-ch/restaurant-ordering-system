@@ -114,7 +114,7 @@ Authenticated sessions use random HttpOnly, SameSite=Strict cookies with 12-hour
 - `apps/api`: NestJS public/customer, restaurant, and platform routes; validation, transactions, membership checks, payment instructions, and SSE.
 - `packages/prisma`: shared schema, SQL migrations, Prisma client, and optional operator seed.
 - `packages/api-client`: runtime-agnostic typed endpoint contracts.
-- `packages/ui`, `design-system`, `icons`: existing shared template design assets.
+- `packages/ui`, `design-system`, `icons`: shared UI components, Tailwind tokens and layered styles, and icons. The web app imports design-system styles instead of defining a second unlayered stylesheet.
 - `apps/db`: local PostgreSQL Compose service.
 
 The `202609220001_multi_tenant` migration preserves a deployed single-restaurant POC's users, menu, table QR tokens, orders, item snapshots, and payment states in one starter tenant/branch. Back up production data and test the migration on a restored copy before applying it live. The former `SERVED` state maps to `COMPLETED`, and former QR payment maps to PROMPTPAY.

@@ -9,6 +9,7 @@ This is an npm-workspaces/Turborepo TypeScript monorepo.
 - packages/prisma owns the PostgreSQL schema, migrations, generated client, and seed logic. The Prisma schema and migrations are the database source of truth.
 - packages/api-client contains runtime-agnostic endpoint contracts and API types. Keep it free of browser-, Next.js-, and NestJS-specific code.
 - packages/ui, packages/design-system, and packages/icons are shared presentation packages.
+- packages/design-system/shared-styles.css owns Tailwind tokens and layered base/component styles. apps/web/app/globals.css only imports it; prefer Tailwind utilities in components and keep new shared selectors in the component layer so utilities can override them.
 
 The web app may depend on shared packages. The API may depend on Prisma and shared packages. Shared packages must not depend on either application.
 
